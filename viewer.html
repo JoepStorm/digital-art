@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Physarum Evolution</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #1a1a1a; color: #fff; font-family: system-ui, sans-serif; }
+    iframe {
+      display: block;
+      width: 100%;
+      height: calc(100vh - 52px);
+      border: none;
+    }
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      height: 52px;
+      background: #111;
+      border-top: 1px solid #333;
+    }
+    button, .link-btn {
+      background: #333;
+      color: #fff;
+      border: 1px solid #555;
+      padding: 6px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      text-decoration: none;
+    }
+    button:hover, .link-btn:hover { background: #444; }
+    button:disabled { opacity: 0.3; cursor: default; }
+    .label {
+      font-variant-numeric: tabular-nums;
+      min-width: 70px;
+      text-align: center;
+      font-size: 14px;
+      color: #aaa;
+    }
+    .desc {
+      font-size: 13px;
+      color: #888;
+      max-width: 400px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <iframe id="sketch"></iframe>
+  <div class="controls">
+    <button id="prev" onclick="go(-1)">&larr;</button>
+    <span class="label" id="label">-</span>
+    <button id="next" onclick="go(1)">&rarr;</button>
+    <span class="desc" id="desc"></span>
+    <a class="link-btn" href="gallery.html">Gallery</a>
+  </div>
+  <script src="snapshots/manifest.js"></script>
+  <script>
+    var manifest = window.MANIFEST || { latest: 0, iterations: [] };
+    var current = 0;
+
+    load(manifest.latest);
+
+    function go(delta) {
+      load(Math.max(0, Math.min(manifest.latest, current + delta)));
+    }
+
+    function load(n) {
+      current = n;
+      document.getElementById('sketch').src = 'index.html?gen=' + n;
+      document.getElementById('label').textContent = n + ' / ' + manifest.latest;
+      document.getElementById('prev').disabled = (n <= 0);
+      document.getElementById('next').disabled = (n >= manifest.latest);
+      var entry = manifest.iterations.find(function(e) { return e.num === n; });
+      document.getElementById('desc').textContent = entry ? entry.description : '';
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowLeft') go(-1);
+      if (e.key === 'ArrowRight') go(1);
+    });
+  </script>
+</body>
+</html>

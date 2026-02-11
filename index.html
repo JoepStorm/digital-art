@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const gen = params.get('gen');
+    const src = gen !== null
+      ? 'snapshots/' + String(gen).padStart(4, '0') + '.js'
+      : 'sketch_slime_simple.js';
+    const s = document.createElement('script');
+    s.src = src;
+    document.body.appendChild(s);
+  </script>
+</body>
+</html>

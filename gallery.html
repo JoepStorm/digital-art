@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Physarum Gallery</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #1a1a1a;
+      color: #fff;
+      font-family: system-ui, sans-serif;
+      padding: 24px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .header h1 { font-size: 20px; font-weight: 500; }
+    a.btn {
+      background: #333;
+      color: #fff;
+      border: 1px solid #555;
+      padding: 6px 14px;
+      border-radius: 4px;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    a.btn:hover { background: #444; }
+    .entry {
+      margin-bottom: 32px;
+    }
+    .entry img {
+      width: 100%;
+      max-width: 1920px;
+      border-radius: 4px;
+    }
+    .entry .meta {
+      padding: 8px 0;
+      font-size: 14px;
+      color: #999;
+    }
+    .entry .meta strong { color: #ccc; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <a class="btn" href="viewer.html">&larr; Viewer</a>
+    <h1>Evolution Gallery</h1>
+  </div>
+  <div id="gallery"></div>
+  <script src="snapshots/manifest.js"></script>
+  <script>
+    var data = window.MANIFEST || { latest: 0, iterations: [] };
+    var el = document.getElementById('gallery');
+    for (var i = 0; i <= data.latest; i++) {
+      var entry = data.iterations.find(function(e) { return e.num === i; });
+      var num = String(i).padStart(4, '0');
+      var desc = entry && entry.description ? ' \u2014 ' + entry.description : '';
+      var div = document.createElement('div');
+      div.className = 'entry';
+      div.innerHTML =
+        '<div class="meta"><strong>Iteration ' + i + '</strong>' + desc + '</div>' +
+        '<img src="snapshots/' + num + '.png" loading="lazy" alt="Iteration ' + i + '">';
+      el.appendChild(div);
+    }
+  </script>
+</body>
+</html>
