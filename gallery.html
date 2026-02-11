@@ -32,7 +32,7 @@
     }
     .entry img {
       width: 100%;
-      max-width: 1920px;
+      max-width: 1600px;
       border-radius: 4px;
     }
     .entry .meta {
@@ -60,7 +60,8 @@
       var div = document.createElement('div');
       div.className = 'entry';
       div.innerHTML =
-        '<div class="meta"><strong>Iteration ' + i + '</strong>' + desc + '</div>' +
+        '<div class="meta"><strong>Iteration ' + i + '</strong>' + desc +
+        ' <a class="btn" href="viewer.html?gen=' + i + '">View &rarr;</a></div>' +
         '<img src="snapshots/' + num + '.png" loading="lazy" alt="Iteration ' + i + '">';
       el.appendChild(div);
     }

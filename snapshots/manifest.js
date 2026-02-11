@@ -1,5 +1,5 @@
 window.MANIFEST = {
-  "latest": 5,
+  "latest": 7,
   "iterations": [
     {
       "num": 0,
@@ -24,6 +24,14 @@ window.MANIFEST = {
     {
       "num": 5,
       "description": "Add a slight color variation to the trail based on the agent's direction"
+    },
+    {
+      "num": 6,
+      "description": "MANUAL: changed canvas size"
+    },
+    {
+      "num": 7,
+      "description": "Add a subtle bloom effect by blurring the pixels after updating them"
     }
   ]
 };

@@ -4,7 +4,6 @@
 // Iteration 4: Increase the number of update iterations to make the trails more dense
 // Iteration 5: Add a slight color variation to the trail based on the agent's direction
 // Iteration 6: MANUAL: changed canvas size
-// Iteration 7: Add a subtle bloom effect by blurring the pixels after updating them
 const agentColor = new Uint8Array([0, 0, 0]);
 const agentsNum = 5000;
 const sensorOffset = 10;
@@ -36,39 +35,6 @@ function draw() {
   for (let i = 50; i--; ) {
     agents.update();
   }
-
-  // Apply a subtle blur effect
-  for (let x = 0; x < width; x++) {
-    for (let y = 0; y < height; y++) {
-      let index = (x + y * width) * 4;
-      let r = 0, g = 0, b = 0, a = 0;
-
-      // Average the color of the current pixel and its neighbors
-      for (let i = -1; i <= 1; i++) {
-        for (let j = -1; j <= 1; j++) {
-          let nx = (x + i + width) % width;
-          let ny = (y + j + height) % height;
-          let nIndex = (nx + ny * width) * 4;
-
-          r += pixels[nIndex];
-          g += pixels[nIndex + 1];
-          b += pixels[nIndex + 2];
-          a += pixels[nIndex + 3];
-        }
-      }
-
-      r = floor(r / 9);
-      g = floor(g / 9);
-      b = floor(b / 9);
-      a = floor(a / 9);
-
-      pixels[index] = r;
-      pixels[index + 1] = g;
-      pixels[index + 2] = b;
-      pixels[index + 3] = a;
-    }
-  }
-
   updatePixels();
 }
 

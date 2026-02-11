@@ -52,9 +52,14 @@
 <body>
   <iframe id="sketch"></iframe>
   <div class="controls">
+    <button onclick="load(0)">&laquo;</button>
     <button id="prev" onclick="go(-1)">&larr;</button>
+    <input id="geninput" type="number" min="0" value="0"
+      style="width:48px;background:#222;color:#fff;border:1px solid #555;border-radius:4px;padding:4px 6px;font-size:14px;text-align:center;-moz-appearance:textfield"
+      onchange="load(Math.max(0,Math.min(manifest.latest,+this.value)))">
     <span class="label" id="label">-</span>
     <button id="next" onclick="go(1)">&rarr;</button>
+    <button onclick="load(manifest.latest)">&raquo;</button>
     <span class="desc" id="desc"></span>
     <a class="link-btn" href="gallery.html">Gallery</a>
   </div>
@@ -62,8 +67,9 @@
   <script>
     var manifest = window.MANIFEST || { latest: 0, iterations: [] };
     var current = 0;
-
-    load(manifest.latest);
+    var params = new URLSearchParams(window.location.search);
+    var startGen = params.get('gen');
+    load(startGen !== null ? Math.max(0, Math.min(manifest.latest, +startGen)) : manifest.latest);
 
     function go(delta) {
       load(Math.max(0, Math.min(manifest.latest, current + delta)));
@@ -72,7 +78,9 @@
     function load(n) {
       current = n;
       document.getElementById('sketch').src = 'index.html?gen=' + n;
-      document.getElementById('label').textContent = n + ' / ' + manifest.latest;
+      document.getElementById('geninput').value = n;
+      document.getElementById('geninput').max = manifest.latest;
+      document.getElementById('label').textContent = '/ ' + manifest.latest;
       document.getElementById('prev').disabled = (n <= 0);
       document.getElementById('next').disabled = (n >= manifest.latest);
       var entry = manifest.iterations.find(function(e) { return e.num === n; });
