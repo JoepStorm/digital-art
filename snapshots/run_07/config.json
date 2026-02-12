@@ -1,0 +1,6 @@
+{
+  "name": "Chaos vs Order",
+  "model": "google/gemini-3-flash-preview",
+  "prompt": "Chaos vs Order",
+  "description": "Chaos vs Order"
+}

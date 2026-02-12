@@ -1,0 +1,6 @@
+{
+  "name": "Minimalism",
+  "model": "google/gemini-3-flash-preview",
+  "prompt": "Minimalism",
+  "description": "Minimalism"
+}

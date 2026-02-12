@@ -1,5 +1,6 @@
 {
   "name": "Multi-agent rules",
+  "model": "google/gemini-3-flash-preview",
   "prompt": "Focus on multiple agents interacting. Each agent should have unique rules, and allow a lot of freedom for complexemerging interactions.",
   "description": "Focus on multiple agents interacting. Each agent should have unique rules, and allow a lot of freedom for complexemerging interactions."
 }

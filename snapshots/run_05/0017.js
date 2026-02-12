@@ -1,0 +1,275 @@
+// Inspired by Jason
+// Iteration 1: The Weaver - Introduced agent aging and dynamic color shifting to simulate a lifecycle
+// Iteration 2: The Necromancer - Particles now scavenge and gain speed from the fading trails of their ancestors
+// Iteration 3: The Harbinger - Introduced radial spawning and a pulsating field of attraction to simulate tidal evolution
+// Iteration 4: The Alchemist - Introduced cellular mutation where agents transmute their path into a diffusive "bioluminescent" flux
+// Iteration 5: The Architect - Introduced spatial partitioning and structural calcification where old paths solidify into barriers
+// Iteration 6: The Reaper - Introduced genetic drift and a survival-of-the-fittest mechanic where agents cannibalize the vitality of intersecting trails
+// Iteration 7: The Symbiote - Introduced a horizontal gene transfer mechanism where agents swapping paths also exchange mutation rates
+// Iteration 8: The Wraith - Introduced ephemeral ghosts that manifest from depleted trails, creating a recursive atmospheric haze
+// Iteration 9: The Gardener - Introduced Gravitational Pollination where agents occasionally drop static 'seeds' that deflect runners and bloom into orbits
+// Iteration 10: The Chronos - Introduced Temporal Dilation where agents age faster in crowded areas, creating localized speed-warping pockets
+// Iteration 11: The Weaver - Introduced Mycelial Fusion where agents create structural "bridges" when crossing dense ley lines
+// Iteration 12: The Void-Walker - Introduced Singularity Collapse where the core occasionally draws in all agents, transmuting their life into a radiant shockwave.
+// Iteration 13: The Eclipsed - Introduced "Looming Shadows" which cast reverse-trails that erode intensity, creating high-contrast skeletal negative spaces.
+// Iteration 14: The Celestial - Introduced Stellar Nucleosynthesis where agents fuse into bright neon 'protostars' when colliding in high-energy zones.
+// Iteration 15: The Chrysalis - Introduced Metamorphosis where elderly agents crystallize into slow-moving, luminous silken fibers before bursting into new life.
+// Iteration 16: The Neural Weaver - Agents now establish synaptic links, firing bright electrical pulses along established trails to simulate emergent cognition.
+// Iteration 17: The Weaver - Introduced Apoptosis where agents that fail to find trails release a "mortal pheromone" which triggers a rapid decay in local trail density.
+const agentsNum = 4200;
+const sensorOffset = 20;
+const sensorAngle = Math.PI / 4;
+const turnAngle = Math.PI / 8;
+let agents;
+let seeds = [];
+let singularityActive = false;
+let singularityTimer = 0;
+let synapticCharge = 0;
+
+function setup() {
+  createCanvas(1600, 900);
+  pixelDensity(1);
+  background(0);
+  agents = new Agents();
+}
+
+function draw() {
+  background(0, singularityActive ? 8 : 15);
+  loadPixels();
+  
+  singularityTimer++;
+  if (!singularityActive && singularityTimer > 600 && random() < 0.005) {
+    singularityActive = true;
+    singularityTimer = 0;
+  } else if (singularityActive && singularityTimer > 150) {
+    singularityActive = false;
+    singularityTimer = 0;
+  }
+
+  synapticCharge = (sin(frameCount * 0.02) * 0.5 + 0.5) * 255;
+
+  for (let i = 4; i--; ) {
+    agents.update();
+  }
+  updatePixels();
+  
+  if (seeds.length > 60) seeds.shift();
+}
+
+class Agent {
+  constructor() {
+    this.isShadow = random() < 0.12; 
+    this.init();
+  }
+
+  init() {
+    const angle = random(TWO_PI);
+    const radius = random() > 0.15 ? random(5, 120) : random(350, 600);
+    this.x = width / 2 + cos(angle) * radius;
+    this.y = height / 2 + sin(angle) * radius;
+    this.dir = angle + (random() > 0.5 ? PI : 0);
+    
+    this.life = random(200, 1000);
+    this.maxLife = this.life;
+    this.speed = this.isShadow ? 2.5 : 1.2;
+    this.mutation = random(0.3, 3.0);
+    this.affinity = random([-1, 1]);
+    this.reaperGene = random(0.2, 0.8);
+    this.isGhost = false;
+    this.isRadiant = false; 
+    this.isFused = false;
+    this.isChrysalis = false;
+    this.synapticPulse = 0;
+  }
+
+  updateDirection() {
+    if (this.isGhost) {
+        this.dir += sin(frameCount * 0.04) * 0.03;
+        return;
+    }
+    
+    if (this.isChrysalis) {
+      this.dir += 0.15 * this.affinity;
+      return;
+    }
+
+    const dx = this.x - width / 2;
+    const dy = this.y - height / 2;
+    const distToCenter = sqrt(dx*dx + dy*dy);
+    const angleToCenter = atan2(dy, dx);
+
+    if (singularityActive) {
+      if (distToCenter > 30 && singularityTimer < 80) {
+        this.dir = lerp(this.dir, angleToCenter + PI, 0.2);
+      } else if (distToCenter < 120 && singularityTimer >= 80) {
+        this.dir = angleToCenter;
+        this.speed *= 1.4;
+        this.isRadiant = true;
+        this.life = this.maxLife;
+      }
+    } else {
+      this.isRadiant = false;
+    }
+
+    for (let s of seeds) {
+      let sdx = s.x - this.x;
+      let sdy = s.y - this.y;
+      let d2 = sdx*sdx + sdy*sdy;
+      if (d2 < 3000) { 
+        let force = (1 - sqrt(d2)/55) * 0.25;
+        this.dir += (this.affinity > 0 ? force : -force);
+      }
+    }
+
+    const right = this.sense(+sensorAngle);
+    const center = this.sense(0);
+    const left = this.sense(-sensorAngle);
+    
+    const pulse = sin(frameCount * 0.01) * 0.2;
+    this.dir += pulse * (this.dir - angleToCenter);
+
+    const baseSpeed = this.isShadow ? 2.8 : 1.2;
+    this.speed = map(center + left + right, 0, 765, baseSpeed, baseSpeed * 3);
+    const actualTurn = turnAngle * this.mutation;
+
+    if (center > left && center > right) {
+    } else if (center < left && center < right) {
+      this.dir += (random() < 0.5 ? 1 : -1) * actualTurn * this.affinity;
+    } else if (left > right) {
+      this.dir -= actualTurn * this.affinity;
+    } else if (right > left) {
+      this.dir += actualTurn * this.affinity;
+    }
+    
+    if (this.x < 20 || this.x > width - 20 || this.y < 20 || this.y > height - 20) {
+        this.dir += (angleToCenter + PI - this.dir) * 0.2;
+    }
+  }
+
+  sense(dirOffset) {
+    const angle = this.dir + dirOffset;
+    let x = Math.floor(this.x + sensorOffset * cos(angle));
+    let y = Math.floor(this.y + sensorOffset * sin(angle));
+    x = (x + width) % width;
+    y = (y + height) % height;
+    const index = (x + y * width) * 4;
+    return (pixels[index + 2] + pixels[index + 1]) - (pixels[index] * 0.6);
+  }
+
+  updatePosition() {
+    this.x += cos(this.dir) * this.speed;
+    this.y += sin(this.dir) * this.speed;
+    this.x = (this.x + width) % width;
+    this.y = (this.y + height) % height;
+
+    const px = Math.floor(this.x);
+    const py = Math.floor(this.y);
+    
+    if (px >= 0 && px < width && py >= 0 && py < height) {
+      const index = (px + py * width) * 4;
+      let r = pixels[index];
+      let g = pixels[index + 1];
+      let b = pixels[index + 2];
+
+      if (this.isShadow) {
+          pixels[index] = max(0, r - 50);
+          pixels[index + 1] = max(0, g - 50);
+          pixels[index + 2] = max(0, b - 50);
+          this.life -= 1.5;
+          if (this.life <= 0) { this.init(); return; }
+      } else {
+          if (!this.isGhost) {
+              const localIntensity = (g + b) / 510;
+              const timeWarp = 1.0 + (localIntensity * 3.5);
+
+              // Iteration 17: Apoptosis - If wandering in void, cause a localized erosion that eats away old structure
+              if (localIntensity < 0.05 && random() < 0.1) {
+                  pixels[index] = max(0, r - 30);
+                  pixels[index+1] = max(0, g - 30);
+                  pixels[index+2] = max(0, b - 30);
+              }
+              
+              if (b > 240 && g > 180 && !this.isFused && random() < 0.05) {
+                this.isFused = true;
+                this.mutation *= 1.5;
+                this.speed *= 0.5;
+              }
+
+              if (g > 160 && random() < 0.04) {
+                this.mutation = lerp(this.mutation, random(0.2, 4.0), 0.15);
+                if (random() < 0.008) seeds.push({x: this.x, y: this.y});
+              }
+
+              if (b > 60) {
+                this.life += b * 0.025 * this.reaperGene;
+                pixels[index + 2] = max(0, b - 12);
+                if (synapticCharge > 200 && b > 200 && random() < 0.1) this.synapticPulse = 255;
+              }
+              this.synapticPulse *= 0.9;
+
+              this.life -= (this.isFused || this.isChrysalis) ? timeWarp * 2.5 : timeWarp;
+              
+              if (this.life <= 15 && !this.isChrysalis && !this.isGhost) {
+                this.isChrysalis = true;
+                this.life = 100;
+                this.speed *= 0.15;
+              }
+
+              if (this.life <= 0) {
+                if (r > 120 && random() < 0.25) {
+                    this.isGhost = true;
+                    this.life = 120;
+                    this.isFused = false;
+                    this.isChrysalis = false;
+                } else {
+                    this.init(); 
+                    return;
+                }
+              }
+          } else {
+              this.life -= 1;
+              if (this.life <= 0) { this.init(); return; }
+          }
+
+          const lifeRatio = constrain(this.life / (this.isGhost ? 120 : this.maxLife), 0, 1);
+          
+          if (this.synapticPulse > 10) {
+              pixels[index] = min(255, pixels[index] + this.synapticPulse);
+              pixels[index + 1] = min(255, pixels[index + 1] + this.synapticPulse);
+              pixels[index + 2] = min(255, pixels[index + 2] + this.synapticPulse);
+          } else if (this.isRadiant) {
+              pixels[index] = min(255, pixels[index] + 210);
+              pixels[index + 1] = min(255, pixels[index + 1] + 130);
+              pixels[index + 2] = 255;
+          } else if (this.isChrysalis) {
+              pixels[index] = min(255, r + 180);
+              pixels[index + 1] = min(255, g + 210);
+              pixels[index + 2] = min(255, b + 255);
+          } else if (this.isFused) {
+              pixels[index] = min(255, r + 250 * lifeRatio); 
+              pixels[index + 1] = min(255, g + 80); 
+              pixels[index + 2] = min(255, b + 250); 
+          } else if (this.isGhost) {
+              pixels[index] = min(255, pixels[index] + 35);
+              pixels[index + 1] = min(255, pixels[index + 1] + 15); 
+              pixels[index + 2] = min(255, pixels[index + 2] + 55);
+          } else {
+              pixels[index] = min(255, r + (10 * (1 - lifeRatio))); 
+              pixels[index + 1] = min(255, g + (18 * this.reaperGene * lifeRatio));
+              pixels[index + 2] = min(255, b + 160); 
+          }
+      }
+      pixels[index + 3] = 255;
+    }
+  }
+}
+
+class Agents {
+  constructor() {
+    this.agents = Array(agentsNum).fill().map(() => new Agent());
+  }
+  update() {
+    for (let agent of this.agents) agent.updateDirection();
+    for (let agent of this.agents) agent.updatePosition();
+  }
+}

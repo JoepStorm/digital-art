@@ -106,8 +106,15 @@
       document.getElementById('viewerLink').href = 'viewer.html?run=' + currentRun;
       var runInfo = runsData.runs.find(function(r) { return r.id === currentRun; });
       var promptEl = document.getElementById('runPrompt');
+      var parts = [];
       if (runInfo && runInfo.prompt && runInfo.prompt !== 'default') {
-        promptEl.innerHTML = '<strong>Prompt:</strong> ' + runInfo.prompt;
+        parts.push('<strong>Prompt:</strong> ' + runInfo.prompt);
+      }
+      if (runInfo && runInfo.model) {
+        parts.push('<strong>Model:</strong> ' + runInfo.model);
+      }
+      if (parts.length) {
+        promptEl.innerHTML = parts.join('<br>');
         promptEl.style.display = '';
       } else {
         promptEl.style.display = 'none';

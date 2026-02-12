@@ -1,0 +1,339 @@
+// Inspired by Jason
+// Iteration 1: Symbiogenesis - Two populations: cyan prey that flee and leave fading trails, magenta predators that chase prey and leave bright trails, with oscillating populations
+// Iteration 2: Luminous Drift - Add trail diffusion/blur pass for organic glowing tendrils instead of scattered dots
+// Iteration 3: Bioluminescent Currents - Replace expensive BLUR filter with manual 3x3 kernel diffusion on pixel data for smoother organic tendrils and better performance, plus add subtle pulsing glow intensity tied to population ratio
+// Iteration 4: Phosphor Bloom - Increase deposit intensity by having agents write to a 3x3 area instead of single pixel, creating thicker luminous trails that diffusion can spread into proper tendrils
+// Iteration 5: Coral Reef - Add prey flee behavior so prey actively steer away from nearby predator trails (red channel), creating dramatic chase patterns and emergent swarm structures
+// Iteration 6: Borealis Veil - Add a translucent dark overlay each frame instead of pure trail persistence, creating comet-like fading tails and revealing the chase dynamics more clearly against deeper blacks
+// Iteration 7: Murmuration - Add predator repulsion from own trails to prevent clumping, creating sweeping hunt formations that fan out and encircle prey swarms
+// Iteration 8: Spectral Wake - Add velocity-dependent trail width and color intensity so fast-moving agents leave brilliant streaks while slow ones leave dim spores, creating dramatic comet tails during chases
+// Iteration 9: Ember Tide - Dramatically increase trail deposit brightness and reduce decay to actually build visible tendrils, plus boost base agent counts for denser coverage
+// Iteration 10: Abyssal Bloom - Add warm golden "death burst" particles where prey are caught, creating ephemeral bloom explosions that fade into the trail map, marking the drama of each predation event
+// Iteration 11: Abyssal Currents - Add flowing background current field using Perlin noise that gently pushes all agents, creating organic river-like flow patterns and swirling vortex structures
+
+const preyColor = new Uint8Array([0, 220, 220]);
+const predatorColor = new Uint8Array([255, 20, 100]);
+const preyNum = 5000;
+const predatorNum = 1200;
+const sensorOffset = 12;
+const sensorAngle = Math.PI / 6;
+const turnAngle = Math.PI / 5;
+const predatorSpeed = 1.4;
+const preySpeed = 1.1;
+const predatorSenseRange = 18;
+const catchRadius = 4;
+const preyReproduceChance = 0.002;
+const predatorStarveChance = 0.001;
+
+const preyDangerSenseRange = 28;
+const preyFleeWeight = 3.0;
+
+const predatorSelfRepelWeight = 1.5;
+
+// Flow field parameters — Perlin noise drives a gentle current across the canvas
+const flowScale = 0.003;       // spatial frequency of the noise field
+const flowStrength = 0.35;     // how much the current deflects agents
+const flowTimeSpeed = 0.0008;  // how fast the flow evolves over time
+
+let preyAgents, predatorAgents;
+let trailA, trailB;
+
+// Burst particles emitted at predation events
+let bursts = [];
+
+function setup() {
+  createCanvas(1600, 900);
+  pixelDensity(1);
+  background(0);
+  
+  const totalPixels = width * height * 3;
+  trailA = new Float32Array(totalPixels);
+  trailB = new Float32Array(totalPixels);
+  
+  preyAgents = Array(preyNum).fill().map(() => new PreyAgent());
+  predatorAgents = Array(predatorNum).fill().map(() => new PredatorAgent());
+}
+
+// Deposit trail with intensity and radius based on agent's current speed/urgency
+function depositTrail(px, py, r, g, b, intensity) {
+  const ix = floor(px);
+  const iy = floor(py);
+  const bright = constrain(intensity, 0.3, 2.0);
+  const radius = bright > 1.2 ? 2 : 1;
+  
+  const depositScale = 40.0;
+  
+  for (let dy = -radius; dy <= radius; dy++) {
+    for (let dx = -radius; dx <= radius; dx++) {
+      if (radius === 2 && abs(dx) === 2 && abs(dy) === 2) continue;
+      
+      let x = (ix + dx + width) % width;
+      let y = (iy + dy + height) % height;
+      const idx = (x + y * width) * 3;
+      
+      const dist = sqrt(dx * dx + dy * dy);
+      const falloff = max(0, 1.0 - dist / (radius + 0.5)) * bright * depositScale;
+      
+      trailA[idx]     = min(255, trailA[idx]     + r / 255 * falloff);
+      trailA[idx + 1] = min(255, trailA[idx + 1] + g / 255 * falloff);
+      trailA[idx + 2] = min(255, trailA[idx + 2] + b / 255 * falloff);
+    }
+  }
+}
+
+// Deposit a burst of warm golden light at a given position - marks predation events
+function depositBurst(px, py, radius, intensity) {
+  const ix = floor(px);
+  const iy = floor(py);
+  for (let dy = -radius; dy <= radius; dy++) {
+    for (let dx = -radius; dx <= radius; dx++) {
+      const d2 = dx * dx + dy * dy;
+      if (d2 > radius * radius) continue;
+      let x = (ix + dx + width) % width;
+      let y = (iy + dy + height) % height;
+      const idx = (x + y * width) * 3;
+      const dist = sqrt(d2);
+      // Gaussian-ish falloff for soft bloom
+      const falloff = intensity * exp(-dist * dist / (radius * radius * 0.3));
+      // Warm golden-white color: high R, medium G, low B
+      trailA[idx]     = min(255, trailA[idx]     + falloff * 1.0);
+      trailA[idx + 1] = min(255, trailA[idx + 1] + falloff * 0.75);
+      trailA[idx + 2] = min(255, trailA[idx + 2] + falloff * 0.2);
+    }
+  }
+}
+
+// Sample the Perlin-noise flow field angle at a given position and current time
+function getFlowAngle(px, py, t) {
+  return noise(px * flowScale, py * flowScale, t) * TWO_PI * 2;
+}
+
+function draw() {
+  // Diffuse and decay trails using a 3x3 mean kernel
+  const w = width;
+  const h = height;
+  const decayRate = 0.965;
+  const diffuseWeight = 0.3;
+  
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const idx = (x + y * w) * 3;
+      for (let c = 0; c < 3; c++) {
+        const center = trailA[idx + c];
+        const sum = 
+          trailA[((x-1) + (y-1) * w) * 3 + c] +
+          trailA[((x)   + (y-1) * w) * 3 + c] +
+          trailA[((x+1) + (y-1) * w) * 3 + c] +
+          trailA[((x-1) + (y)   * w) * 3 + c] +
+          trailA[((x+1) + (y)   * w) * 3 + c] +
+          trailA[((x-1) + (y+1) * w) * 3 + c] +
+          trailA[((x)   + (y+1) * w) * 3 + c] +
+          trailA[((x+1) + (y+1) * w) * 3 + c];
+        const avg = sum / 8;
+        trailB[idx + c] = (center * (1 - diffuseWeight) + avg * diffuseWeight) * decayRate;
+      }
+    }
+  }
+  
+  let tmp = trailA;
+  trailA = trailB;
+  trailB = tmp;
+  
+  // Process expanding burst particles - they deposit golden light into the trail map
+  for (let i = bursts.length - 1; i >= 0; i--) {
+    let b = bursts[i];
+    b.age++;
+    b.radius += 0.8;
+    b.intensity *= 0.82;
+    // Deposit into trail map so it interacts with diffusion
+    depositBurst(b.x, b.y, floor(b.radius), b.intensity);
+    if (b.intensity < 0.5 || b.age > 30) {
+      bursts.splice(i, 1);
+    }
+  }
+  
+  // Population-based pulsing glow
+  const ratio = predatorAgents.length / max(1, preyAgents.length);
+  const pulse = 1.0 + 0.15 * sin(frameCount * 0.03) * (1 + ratio);
+  
+  // Render trails to canvas pixels with tone mapping
+  loadPixels();
+  for (let i = 0, j = 0; i < pixels.length; i += 4, j += 3) {
+    let r = trailA[j] * pulse;
+    let g = trailA[j + 1] * pulse;
+    let b = trailA[j + 2] * pulse;
+    
+    // Tone mapping: boost mids for richer colors, keep blacks deep
+    pixels[i]     = min(255, r + r * r * 0.004);
+    pixels[i + 1] = min(255, g + g * g * 0.004);
+    pixels[i + 2] = min(255, b + b * b * 0.004);
+    pixels[i + 3] = 255;
+  }
+  
+  // Current time value for evolving flow field
+  const flowTime = frameCount * flowTimeSpeed;
+  
+  // Run simulation steps — agents read from pixels for sensing
+  for (let step = 0; step < 5; step++) {
+    preyAgents.forEach(e => e.updateDirection(flowTime));
+    preyAgents.forEach(e => e.updatePosition(flowTime));
+    predatorAgents.forEach(e => e.updateDirection(flowTime));
+    predatorAgents.forEach(e => e.updatePosition(flowTime));
+  }
+  
+  updatePixels();
+
+  handleInteractions();
+
+  noStroke();
+  fill(255, 180);
+  textSize(14);
+  text(`Prey: ${preyAgents.length}  Predators: ${predatorAgents.length}`, 10, 20);
+}
+
+function handleInteractions() {
+  let newPrey = [];
+  let caughtSet = new Set();
+
+  for (let p = predatorAgents.length - 1; p >= 0; p--) {
+    let pred = predatorAgents[p];
+    let ate = false;
+    for (let q = preyAgents.length - 1; q >= 0; q--) {
+      if (caughtSet.has(q)) continue;
+      let dx = pred.x - preyAgents[q].x;
+      let dy = pred.y - preyAgents[q].y;
+      if (dx * dx + dy * dy < catchRadius * catchRadius) {
+        caughtSet.add(q);
+        ate = true;
+        
+        // Spawn a golden death burst at the predation site
+        bursts.push({
+          x: preyAgents[q].x,
+          y: preyAgents[q].y,
+          radius: 2,
+          intensity: 60,
+          age: 0
+        });
+        
+        if (predatorAgents.length < 2000) {
+          let baby = new PredatorAgent();
+          baby.x = pred.x;
+          baby.y = pred.y;
+          baby.dir = random(TWO_PI);
+          predatorAgents.push(baby);
+        }
+        break;
+      }
+    }
+    if (!ate && random() < predatorStarveChance) {
+      predatorAgents.splice(p, 1);
+    }
+  }
+
+  let sortedCaught = [...caughtSet].sort((a, b) => b - a);
+  for (let idx of sortedCaught) {
+    preyAgents.splice(idx, 1);
+  }
+
+  let len = preyAgents.length;
+  for (let i = 0; i < len; i++) {
+    if (preyAgents.length < 7000 && random() < preyReproduceChance) {
+      let baby = new PreyAgent();
+      baby.x = preyAgents[i].x + random(-5, 5);
+      baby.y = preyAgents[i].y + random(-5, 5);
+      baby.dir = random(TWO_PI);
+      newPrey.push(baby);
+    }
+  }
+  preyAgents.push(...newPrey);
+
+  if (preyAgents.length < 300) {
+    for (let i = 0; i < 80; i++) preyAgents.push(new PreyAgent());
+  }
+  if (predatorAgents.length < 50) {
+    for (let i = 0; i < 30; i++) predatorAgents.push(new PredatorAgent());
+  }
+}
+
+// Prey agents: attracted to own cyan/green trails, actively flee from red (predator) trails
+// Also gently pushed by the Perlin noise flow field
+class PreyAgent {
+  constructor() {
+    this.x = random(width);
+    this.y = random(height);
+    this.dir = random(TWO_PI);
+    this.urgency = 0;
+  }
+
+  sense(dirOffset) {
+    const angle = this.dir + dirOffset;
+    let x = floor(this.x + sensorOffset * cos(angle));
+    let y = floor(this.y + sensorOffset * sin(angle));
+    x = (x + width) % width;
+    y = (y + height) % height;
+    const index = (x + y * width) * 4;
+    let greenVal = pixels[index + 1];
+    let redVal = pixels[index];
+    return greenVal - redVal * 2;
+  }
+
+  senseDanger(dirOffset) {
+    const angle = this.dir + dirOffset;
+    let x = floor(this.x + preyDangerSenseRange * cos(angle));
+    let y = floor(this.y + preyDangerSenseRange * sin(angle));
+    x = (x + width) % width;
+    y = (y + height) % height;
+    const index = (x + y * width) * 4;
+    return pixels[index];
+  }
+
+  updateDirection(flowTime) {
+    const right = this.sense(+sensorAngle);
+    const center = this.sense(0);
+    const left = this.sense(-sensorAngle);
+
+    const dangerRight = this.senseDanger(+sensorAngle);
+    const dangerCenter = this.senseDanger(0);
+    const dangerLeft = this.senseDanger(-sensorAngle);
+
+    const combinedLeft   = left   - dangerLeft   * preyFleeWeight;
+    const combinedCenter = center - 0.5 - dangerCenter * preyFleeWeight;
+    const combinedRight  = right  - dangerRight  * preyFleeWeight;
+
+    const threeWays = [combinedLeft, combinedCenter, combinedRight];
+    const maxIndex = threeWays.indexOf(max(...threeWays));
+    this.dir += turnAngle * (maxIndex - 1);
+
+    const maxDanger = max(dangerRight, dangerCenter, dangerLeft);
+    const panicJitter = map(maxDanger, 0, 255, 0.1, 0.5);
+    this.dir += random(-panicJitter, panicJitter);
+    
+    const dangerNorm = maxDanger / 255.0;
+    this.urgency = lerp(this.urgency, dangerNorm * 2.0, 0.15);
+    
+    // Apply flow field: gently steer toward the local current direction
+    const flowAngle = getFlowAngle(this.x, this.y, flowTime);
+    const angleDiff = atan2(sin(flowAngle - this.dir), cos(flowAngle - this.dir));
+    this.dir += angleDiff * flowStrength;
+  }
+
+  updatePosition(flowTime) {
+    const speed = preySpeed + this.urgency * 0.4;
+    this.x += speed * cos(this.dir);
+    this.y += speed * sin(this.dir);
+    this.x = (this.x + width) % width;
+    this.y = (this.y + height) % height;
+
+    const intensity = 0.5 + this.urgency;
+    depositTrail(this.x, this.y, preyColor[0], preyColor[1], preyColor[2], intensity);
+  }
+}
+
+// Predator agents: chase prey by following green/blue trails, repel from own red trails
+// Also pushed by flow field but less strongly (they're more deliberate hunters)
+class PredatorAgent {
+  constructor() {
+    this.x = random(width);
+    this.y = random(height);
+    this.dir = random(TWO_PI);
+    this.

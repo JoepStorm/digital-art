@@ -1,5 +1,6 @@
 {
   "name": "Agent interactions",
+  "model": "google/gemini-3-flash-preview",
   "prompt": "The first iteration should simplify the setup, to contain much fewer numAgents, and remove the effect of a mouse. Then, focus on interactions initiating the creation of new events, spawning new things. A lot of co-creation possibilities.",
   "description": "The first iteration should simplify the setup, to contain much fewer numAgents, and remove the effect of a mouse. Then, focus on interactions initiating the creation of new events, spawning new things. A lot of co-creation possibilities."
 }

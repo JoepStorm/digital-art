@@ -1,5 +1,6 @@
 {
   "name": "run_01",
+  "model": "google/gemini-3-flash-preview",
   "prompt": "default",
   "description": "Original Physarum evolution run"
 }

@@ -1,0 +1,6 @@
+{
+  "name": "Biological Structure",
+  "model": "google/gemini-3-flash-preview",
+  "prompt": "Biological microstructures. Agents represent microorganisms that leave behind a web. The web should become structurally strong.",
+  "description": "Biological microstructures. Agents represent microorganisms that leave behind a web. The web should become structurally strong."
+}

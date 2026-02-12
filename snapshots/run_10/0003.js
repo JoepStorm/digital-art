@@ -1,0 +1,255 @@
+// Inspired by Jason
+// Iteration 1: Symbiogenesis - Two populations: cyan prey that flee and leave fading trails, magenta predators that chase prey and leave bright trails, with oscillating populations
+// Iteration 2: Luminous Drift - Add trail diffusion/blur pass for organic glowing tendrils instead of scattered dots
+// Iteration 3: Bioluminescent Currents - Replace expensive BLUR filter with manual 3x3 kernel diffusion on pixel data for smoother organic tendrils and better performance, plus add subtle pulsing glow intensity tied to population ratio
+
+const preyColor = new Uint8Array([0, 220, 220]);
+const predatorColor = new Uint8Array([255, 20, 100]);
+const preyNum = 3000;
+const predatorNum = 800;
+const sensorOffset = 12;
+const sensorAngle = Math.PI / 6;
+const turnAngle = Math.PI / 5;
+const predatorSpeed = 1.4;
+const preySpeed = 1.1;
+const predatorSenseRange = 18;
+const catchRadius = 4;
+const preyReproduceChance = 0.002;
+const predatorStarveChance = 0.001;
+
+let preyAgents, predatorAgents;
+let trailA, trailB; // Double-buffered trail maps for manual diffusion
+
+function setup() {
+  createCanvas(1600, 900);
+  pixelDensity(1);
+  background(0);
+  
+  // Two flat arrays for double-buffered diffusion (RGB per pixel)
+  const totalPixels = width * height * 3;
+  trailA = new Float32Array(totalPixels);
+  trailB = new Float32Array(totalPixels);
+  
+  preyAgents = Array(preyNum).fill().map(() => new PreyAgent());
+  predatorAgents = Array(predatorNum).fill().map(() => new PredatorAgent());
+}
+
+function draw() {
+  // Diffuse and decay trails using a 3x3 mean kernel
+  // This replaces the expensive BLUR filter with direct pixel manipulation
+  const w = width;
+  const h = height;
+  const decayRate = 0.965;
+  const diffuseWeight = 0.18; // How much neighbors contribute vs center
+  
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const idx = (x + y * w) * 3;
+      for (let c = 0; c < 3; c++) {
+        // 3x3 average: center + 8 neighbors
+        const center = trailA[idx + c];
+        const sum = 
+          trailA[((x-1) + (y-1) * w) * 3 + c] +
+          trailA[((x)   + (y-1) * w) * 3 + c] +
+          trailA[((x+1) + (y-1) * w) * 3 + c] +
+          trailA[((x-1) + (y)   * w) * 3 + c] +
+          trailA[((x+1) + (y)   * w) * 3 + c] +
+          trailA[((x-1) + (y+1) * w) * 3 + c] +
+          trailA[((x)   + (y+1) * w) * 3 + c] +
+          trailA[((x+1) + (y+1) * w) * 3 + c];
+        const avg = sum / 8;
+        trailB[idx + c] = (center * (1 - diffuseWeight) + avg * diffuseWeight) * decayRate;
+      }
+    }
+  }
+  
+  // Swap buffers
+  let tmp = trailA;
+  trailA = trailB;
+  trailB = tmp;
+  
+  // Population-based pulsing glow: the ratio of predators to prey modulates brightness
+  const ratio = predatorAgents.length / max(1, preyAgents.length);
+  const pulse = 1.0 + 0.15 * sin(frameCount * 0.03) * (1 + ratio);
+  
+  // Render trails to canvas pixels
+  loadPixels();
+  for (let i = 0, j = 0; i < pixels.length; i += 4, j += 3) {
+    pixels[i]     = min(255, trailA[j] * pulse);
+    pixels[i + 1] = min(255, trailA[j + 1] * pulse);
+    pixels[i + 2] = min(255, trailA[j + 2] * pulse);
+    pixels[i + 3] = 255;
+  }
+  
+  // Run simulation steps — agents read from and deposit to canvas pixels
+  for (let step = 0; step < 5; step++) {
+    preyAgents.forEach(e => e.updateDirection());
+    preyAgents.forEach(e => e.updatePosition());
+    predatorAgents.forEach(e => e.updateDirection());
+    predatorAgents.forEach(e => e.updatePosition());
+  }
+  
+  // Write agent deposits back into the trail buffer
+  for (let i = 0, j = 0; i < pixels.length; i += 4, j += 3) {
+    trailA[j]     = pixels[i];
+    trailA[j + 1] = pixels[i + 1];
+    trailA[j + 2] = pixels[i + 2];
+  }
+  
+  updatePixels();
+
+  // Population dynamics: predator-prey oscillation
+  handleInteractions();
+
+  // Draw population info
+  noStroke();
+  fill(255, 180);
+  textSize(14);
+  text(`Prey: ${preyAgents.length}  Predators: ${predatorAgents.length}`, 10, 20);
+}
+
+function handleInteractions() {
+  let newPrey = [];
+  let caughtSet = new Set();
+
+  for (let p = predatorAgents.length - 1; p >= 0; p--) {
+    let pred = predatorAgents[p];
+    let ate = false;
+    for (let q = preyAgents.length - 1; q >= 0; q--) {
+      if (caughtSet.has(q)) continue;
+      let dx = pred.x - preyAgents[q].x;
+      let dy = pred.y - preyAgents[q].y;
+      if (dx * dx + dy * dy < catchRadius * catchRadius) {
+        caughtSet.add(q);
+        ate = true;
+        if (predatorAgents.length < 2000) {
+          let baby = new PredatorAgent();
+          baby.x = pred.x;
+          baby.y = pred.y;
+          baby.dir = random(TWO_PI);
+          predatorAgents.push(baby);
+        }
+        break;
+      }
+    }
+    if (!ate && random() < predatorStarveChance) {
+      predatorAgents.splice(p, 1);
+    }
+  }
+
+  let sortedCaught = [...caughtSet].sort((a, b) => b - a);
+  for (let idx of sortedCaught) {
+    preyAgents.splice(idx, 1);
+  }
+
+  let len = preyAgents.length;
+  for (let i = 0; i < len; i++) {
+    if (preyAgents.length < 5000 && random() < preyReproduceChance) {
+      let baby = new PreyAgent();
+      baby.x = preyAgents[i].x + random(-5, 5);
+      baby.y = preyAgents[i].y + random(-5, 5);
+      baby.dir = random(TWO_PI);
+      newPrey.push(baby);
+    }
+  }
+  preyAgents.push(...newPrey);
+
+  if (preyAgents.length < 200) {
+    for (let i = 0; i < 50; i++) preyAgents.push(new PreyAgent());
+  }
+  if (predatorAgents.length < 50) {
+    for (let i = 0; i < 20; i++) predatorAgents.push(new PredatorAgent());
+  }
+}
+
+// Prey agents: attracted to own cyan/green trails, repelled by red (predator) trails
+class PreyAgent {
+  constructor() {
+    this.x = random(width);
+    this.y = random(height);
+    this.dir = random(TWO_PI);
+  }
+
+  sense(dirOffset) {
+    const angle = this.dir + dirOffset;
+    let x = floor(this.x + sensorOffset * cos(angle));
+    let y = floor(this.y + sensorOffset * sin(angle));
+    x = (x + width) % width;
+    y = (y + height) % height;
+    const index = (x + y * width) * 4;
+    let greenVal = pixels[index + 1];
+    let redVal = pixels[index];
+    // Attracted to own trails (green/cyan), repelled by predator trails (red)
+    return greenVal - redVal * 2;
+  }
+
+  updateDirection() {
+    const right = this.sense(+sensorAngle);
+    const center = this.sense(0);
+    const left = this.sense(-sensorAngle);
+
+    const threeWays = [left, center - 0.5, right];
+    const maxIndex = threeWays.indexOf(max(...threeWays));
+    this.dir += turnAngle * (maxIndex - 1);
+    this.dir += random(-0.1, 0.1);
+  }
+
+  updatePosition() {
+    this.x += preySpeed * cos(this.dir);
+    this.y += preySpeed * sin(this.dir);
+    this.x = (this.x + width) % width;
+    this.y = (this.y + height) % height;
+
+    const index = (floor(this.x) + floor(this.y) * width) * 4;
+    pixels[index] = max(pixels[index], preyColor[0]);
+    pixels[index + 1] = max(pixels[index + 1], preyColor[1]);
+    pixels[index + 2] = max(pixels[index + 2], preyColor[2]);
+    pixels[index + 3] = 255;
+  }
+}
+
+// Predator agents: chase prey by following green/blue trails, leave bright magenta trails
+class PredatorAgent {
+  constructor() {
+    this.x = random(width);
+    this.y = random(height);
+    this.dir = random(TWO_PI);
+  }
+
+  sense(dirOffset) {
+    const angle = this.dir + dirOffset;
+    let x = floor(this.x + predatorSenseRange * cos(angle));
+    let y = floor(this.y + predatorSenseRange * sin(angle));
+    x = (x + width) % width;
+    y = (y + height) % height;
+    const index = (x + y * width) * 4;
+    let greenVal = pixels[index + 1];
+    let blueVal = pixels[index + 2];
+    // Chase prey trails which are cyan (green+blue)
+    return greenVal + blueVal * 0.5;
+  }
+
+  updateDirection() {
+    const right = this.sense(+sensorAngle);
+    const center = this.sense(0);
+    const left = this.sense(-sensorAngle);
+
+    const threeWays = [left, center - 0.5, right];
+    const maxIndex = threeWays.indexOf(max(...threeWays));
+    this.dir += turnAngle * (maxIndex - 1);
+    this.dir += random(-0.05, 0.05);
+  }
+
+  updatePosition() {
+    this.x += predatorSpeed * cos(this.dir);
+    this.y += predatorSpeed * sin(this.dir);
+    this.x = (this.x + width) % width;
+    this.y = (this.y + height) % height;
+
+    const index = (floor(this.x) + floor(this.y) * width) * 4;
+    pixels[index] = 255;
+    pixels[index + 1] = max(pixels[index + 1], predatorColor[1]);
+    pixels[index + 2] = max(pixels[index + 2], predatorColor[2]);
+    pixels[index + 3] = 255;
+  }
+}

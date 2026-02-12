@@ -1,0 +1,6 @@
+{
+  "name": "Evolution",
+  "model": "google/gemini-3-flash-preview",
+  "prompt": "Evolution. Life, death, and changing over time.",
+  "description": "Evolution. Life, death, and changing over time."
+}

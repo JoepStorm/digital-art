@@ -1,0 +1,6 @@
+{
+  "name": "Predator-prey",
+  "model": "google/gemini-3-flash-preview",
+  "prompt": "Create distinct agent populations with different colors that interact. One type chases the other. Prey agents flee and leave fading trails. Predators leave bright trails. The populations should oscillate.",
+  "description": "Create distinct agent populations with different colors that interact. One type chases the other. Prey agents flee and leave fading trails. Predators leave bright trails. The populations should oscillate."
+}
