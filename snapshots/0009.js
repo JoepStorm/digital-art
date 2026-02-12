@@ -7,12 +7,6 @@
 // Iteration 7: Add a subtle bloom effect by blurring the pixels after updating them
 // Iteration 8: Implement Diffusive Decay and Evaporation for smoother, more organic membrane textures
 // Iteration 9: Add local flow fields based on pixel brightness to influence agent steering
-// Iteration 10: Map trail color intensity to agent speed and make speed dynamic based on local density
-// Iteration 11: Introduce "Chromatography" by separating color channel diffusion rates
-// Iteration 12: Introduce "Surface Tension" via a non-linear color response curve for sharper boundaries
-// Iteration 13: Add "Nutrient Gradients" where mouse proximity increases agent speed and deposits golden trails
-// Iteration 14: Introduce "Hydrophobic Flow" by perturbing agent positions based on the image gradient (vignette/contour repulsion)
-// Iteration 15: Add "Ionic Repulsion" to agent logic, preventing over-clustering by pushing agents away from each other
 const agentColor = new Uint8Array([0, 0, 0]);
 const agentsNum = 5000;
 const sensorOffset = 18;
@@ -36,10 +30,7 @@ function draw() {
 
   // DIFFUSION AND EVAPORATION STEP
   let nextPixels = new Uint8ClampedArray(pixels);
-  
-  const decayR = 0.94; 
-  const decayG = 0.96;
-  const decayB = 0.98;
+  const decayRate = 0.96; 
   
   for (let x = 1; x < width - 1; x++) {
     for (let y = 1; y < height - 1; y++) {
@@ -47,6 +38,7 @@ function draw() {
       
       let sumR = 0, sumG = 0, sumB = 0;
       
+      // Optimized 3x3 diffusion
       for (let i = -1; i <= 1; i++) {
         for (let j = -1; j <= 1; j++) {
           let nIdx = index + (i + j * width) * 4;
@@ -56,13 +48,9 @@ function draw() {
         }
       }
 
-      let r = (sumR / 9) * decayR + (1 - decayR) * 255;
-      let g = (sumG / 9) * decayG + (1 - decayG) * 255;
-      let b = (sumB / 9) * decayB + (1 - decayB) * 255;
-
-      nextPixels[index]     = r < 128 ? r * 0.98 : min(255, r * 1.01); 
-      nextPixels[index + 1] = g < 128 ? g * 0.98 : min(255, g * 1.01);
-      nextPixels[index + 2] = b < 128 ? b * 0.98 : min(255, b * 1.01);
+      nextPixels[index]     = (sumR / 9) * decayRate + (1 - decayRate) * 255; 
+      nextPixels[index + 1] = (sumG / 9) * decayRate + (1 - decayRate) * 255;
+      nextPixels[index + 2] = (sumB / 9) * decayRate + (1 - decayRate) * 255;
       nextPixels[index + 3] = 255; 
     }
   }
@@ -71,8 +59,8 @@ function draw() {
   updatePixels();
 
   if (mouseIsPressed) {
-    stroke(100, 100, 200, 20);
-    strokeWeight(100);
+    stroke(100, 100, 200, 50);
+    strokeWeight(40);
     line(pmouseX, pmouseY, mouseX, mouseY);
   }
 }
@@ -82,22 +70,15 @@ class Agent {
     this.x = random(width);
     this.y = random(height);
     this.dir = random(TWO_PI);
-    this.speed = 2.5;
-    this.nutrientSens = 0;
   }
 
-  updateDirection(others) {
-    let dx = mouseX - this.x;
-    let dy = mouseY - this.y;
-    let distSq = dx * dx + dy * dy;
-    this.nutrientSens = distSq < 40000 ? map(distSq, 0, 40000, 1, 0) : 0;
-
+  updateDirection() {
     const center = this.sense(0);
     const left = this.sense(-sensorAngle);
     const right = this.sense(+sensorAngle);
 
     if (center < left && center < right) {
-      if(random() < 0.01) this.dir += turnAngle;
+      // Stay on course
     } else if (center > left && center > right) {
       this.dir += (random() < 0.5 ? 1 : -1) * turnAngle;
     } else if (left < right) {
@@ -106,42 +87,30 @@ class Agent {
       this.dir += turnAngle;
     }
     
+    // Add pixel flow influence: agents tend to swirl slightly around existing density
+    // by sampling the intensity gradient
     const idx = (floor(this.x) + floor(this.y) * width) * 4;
-    const brightness = (pixels[idx] + pixels[idx+1] + pixels[idx+2]) / 765;
+    const intensity = (pixels[idx] + pixels[idx+1] + pixels[idx+2]) / 765;
+    this.dir += (0.5 - intensity) * 0.2; // Swirl effect
     
-    // Ionic Repulsion: agents steer away from extremely high trail densities (very dark spots)
-    // This prevents the formation of massive blobs and keeps the network porous.
-    if (brightness < 0.2) {
-        this.dir += random([-1, 1]) * turnAngle * 2.0;
-    }
-
-    let gradX = (this.sense(HALF_PI) - this.sense(-HALF_PI));
-    let gradY = (this.sense(PI) - this.sense(0));
-    this.dir += (gradX + gradY) * 0.05;
-
-    this.speed = map(brightness, 0, 1, 1.2, 3.8) * (1 + this.nutrientSens * 1.5);
-    this.dir += (0.5 - brightness) * 0.25; 
-    this.dir += random(-0.04, 0.04);
-
-    if (this.nutrientSens > 0) {
-      let angleToMouse = atan2(dy, dx);
-      this.dir = lerp(this.dir, angleToMouse, 0.05 * this.nutrientSens);
-    }
+    this.dir += random(-0.05, 0.05);
   }
 
   sense(dirOffset) {
     const angle = this.dir + dirOffset;
     let sx = floor(this.x + sensorOffset * cos(angle));
     let sy = floor(this.y + sensorOffset * sin(angle));
+    
     sx = (sx + width) % width;
     sy = (sy + height) % height;
+
     const index = (sx + sy * width) * 4;
     return (pixels[index] + pixels[index+1] + pixels[index+2]) / 3;
   }
 
   updatePosition() {
-    this.x += cos(this.dir) * this.speed;
-    this.y += sin(this.dir) * this.speed;
+    this.x += cos(this.dir) * 2.5;
+    this.y += sin(this.dir) * 2.5;
 
     if (this.x < 0) this.x += width;
     if (this.x >= width) this.x -= width;
@@ -150,17 +119,10 @@ class Agent {
 
     const index = (floor(this.x) + floor(this.y) * width) * 4;
     
-    let depositR = lerp(45, 80, this.nutrientSens);
-    let depositG = lerp(45, 50, this.nutrientSens);
-    let depositB = lerp(45, 0, this.nutrientSens);
-    
-    depositR = lerp(depositR, 10, this.speed / 8);
-    depositG = lerp(depositG, 60, this.speed / 8);
-    depositB = lerp(depositB, 150, this.speed / 8);
-
-    pixels[index]     = max(0, pixels[index] - depositR);
-    pixels[index + 1] = max(0, pixels[index + 1] - depositG);
-    pixels[index + 2] = max(0, pixels[index + 2] - depositB);
+    // Deposit darker blue-ish trail
+    pixels[index]     = max(0, pixels[index] - 80);
+    pixels[index + 1] = max(0, pixels[index + 1] - 60);
+    pixels[index + 2] = max(0, pixels[index + 2] - 20);
   }
 }
 

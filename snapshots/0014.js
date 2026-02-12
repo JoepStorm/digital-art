@@ -12,7 +12,6 @@
 // Iteration 12: Introduce "Surface Tension" via a non-linear color response curve for sharper boundaries
 // Iteration 13: Add "Nutrient Gradients" where mouse proximity increases agent speed and deposits golden trails
 // Iteration 14: Introduce "Hydrophobic Flow" by perturbing agent positions based on the image gradient (vignette/contour repulsion)
-// Iteration 15: Add "Ionic Repulsion" to agent logic, preventing over-clustering by pushing agents away from each other
 const agentColor = new Uint8Array([0, 0, 0]);
 const agentsNum = 5000;
 const sensorOffset = 18;
@@ -37,6 +36,7 @@ function draw() {
   // DIFFUSION AND EVAPORATION STEP
   let nextPixels = new Uint8ClampedArray(pixels);
   
+  // Differential decay and diffusion rates create a "chromatography" effect 
   const decayR = 0.94; 
   const decayG = 0.96;
   const decayB = 0.98;
@@ -47,6 +47,7 @@ function draw() {
       
       let sumR = 0, sumG = 0, sumB = 0;
       
+      // 3x3 box blur for diffusion
       for (let i = -1; i <= 1; i++) {
         for (let j = -1; j <= 1; j++) {
           let nIdx = index + (i + j * width) * 4;
@@ -56,10 +57,12 @@ function draw() {
         }
       }
 
+      // Apply independent decay/evaporation for each color channel relative to white (255)
       let r = (sumR / 9) * decayR + (1 - decayR) * 255;
       let g = (sumG / 9) * decayG + (1 - decayG) * 255;
       let b = (sumB / 9) * decayB + (1 - decayB) * 255;
 
+      // Surface Tension Effect: slightly pull values towards 0 or 255 to sharpen the "membrane" edges
       nextPixels[index]     = r < 128 ? r * 0.98 : min(255, r * 1.01); 
       nextPixels[index + 1] = g < 128 ? g * 0.98 : min(255, g * 1.01);
       nextPixels[index + 2] = b < 128 ? b * 0.98 : min(255, b * 1.01);
@@ -71,7 +74,7 @@ function draw() {
   updatePixels();
 
   if (mouseIsPressed) {
-    stroke(100, 100, 200, 20);
+    stroke(100, 100, 200, 20); // Softer mouse interaction
     strokeWeight(100);
     line(pmouseX, pmouseY, mouseX, mouseY);
   }
@@ -86,7 +89,7 @@ class Agent {
     this.nutrientSens = 0;
   }
 
-  updateDirection(others) {
+  updateDirection() {
     let dx = mouseX - this.x;
     let dy = mouseY - this.y;
     let distSq = dx * dx + dy * dy;
@@ -107,20 +110,16 @@ class Agent {
     }
     
     const idx = (floor(this.x) + floor(this.y) * width) * 4;
-    const brightness = (pixels[idx] + pixels[idx+1] + pixels[idx+2]) / 765;
+    const intensity = (pixels[idx] + pixels[idx+1] + pixels[idx+2]) / 765;
     
-    // Ionic Repulsion: agents steer away from extremely high trail densities (very dark spots)
-    // This prevents the formation of massive blobs and keeps the network porous.
-    if (brightness < 0.2) {
-        this.dir += random([-1, 1]) * turnAngle * 2.0;
-    }
-
+    // Hydrophobic Repulsion: Agents are pushed slightly away from high-density (darker) areas 
+    // This creates "channels" and reinforces the hollow tube look.
     let gradX = (this.sense(HALF_PI) - this.sense(-HALF_PI));
     let gradY = (this.sense(PI) - this.sense(0));
     this.dir += (gradX + gradY) * 0.05;
 
-    this.speed = map(brightness, 0, 1, 1.2, 3.8) * (1 + this.nutrientSens * 1.5);
-    this.dir += (0.5 - brightness) * 0.25; 
+    this.speed = map(intensity, 0, 1, 1.2, 3.8) * (1 + this.nutrientSens * 1.5);
+    this.dir += (0.5 - intensity) * 0.25; 
     this.dir += random(-0.04, 0.04);
 
     if (this.nutrientSens > 0) {
