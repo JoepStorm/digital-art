@@ -18,9 +18,15 @@
   <script>
     const params = new URLSearchParams(window.location.search);
     const gen = params.get('gen');
-    const src = gen !== null
-      ? 'snapshots/' + String(gen).padStart(4, '0') + '.js'
-      : 'sketch_slime_simple.js';
+    const run = params.get('run');
+    let src;
+    if (gen !== null && run !== null) {
+      src = 'snapshots/' + run + '/' + String(gen).padStart(4, '0') + '.js';
+    } else if (gen !== null) {
+      src = 'snapshots/' + String(gen).padStart(4, '0') + '.js';
+    } else {
+      src = 'sketch_slime_simple.js';
+    }
     const s = document.createElement('script');
     s.src = src;
     document.body.appendChild(s);

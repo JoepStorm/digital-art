@@ -27,6 +27,14 @@
       font-size: 14px;
     }
     a.btn:hover { background: #444; }
+    select {
+      background: #333;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+      padding: 6px 10px;
+      font-size: 14px;
+    }
     .entry {
       margin-bottom: 32px;
     }
@@ -41,30 +49,87 @@
       color: #999;
     }
     .entry .meta strong { color: #ccc; }
+    .run-prompt {
+      margin-bottom: 32px;
+      padding: 16px;
+      background: #222;
+      border-left: 3px solid #555;
+      border-radius: 4px;
+      font-size: 14px;
+      color: #aaa;
+      line-height: 1.5;
+    }
+    .run-prompt strong { color: #ccc; }
   </style>
 </head>
 <body>
   <div class="header">
-    <a class="btn" href="viewer.html">&larr; Viewer</a>
+    <a class="btn" id="viewerLink" href="viewer.html">&larr; Viewer</a>
     <h1>Evolution Gallery</h1>
+    <select id="runSelect" onchange="switchRun(this.value)"></select>
   </div>
+  <div id="runPrompt" class="run-prompt" style="display:none"></div>
   <div id="gallery"></div>
-  <script src="snapshots/manifest.js"></script>
+  <script src="snapshots/runs.js"></script>
   <script>
-    var data = window.MANIFEST || { latest: 0, iterations: [] };
-    var el = document.getElementById('gallery');
-    for (var i = 0; i <= data.latest; i++) {
-      var entry = data.iterations.find(function(e) { return e.num === i; });
-      var num = String(i).padStart(4, '0');
-      var desc = entry && entry.description ? ' \u2014 ' + entry.description : '';
-      var div = document.createElement('div');
-      div.className = 'entry';
-      div.innerHTML =
-        '<div class="meta"><strong>Iteration ' + i + '</strong>' + desc +
-        ' <a class="btn" href="viewer.html?gen=' + i + '">View &rarr;</a></div>' +
-        '<img src="snapshots/' + num + '.png" loading="lazy" alt="Iteration ' + i + '">';
-      el.appendChild(div);
+    var runsData = window.RUNS || { runs: [], default: 'run_01' };
+    var params = new URLSearchParams(window.location.search);
+    var currentRun = params.get('run') || runsData.default || 'run_01';
+
+    function populateRunSelector() {
+      var sel = document.getElementById('runSelect');
+      sel.innerHTML = '';
+      runsData.runs.forEach(function(r) {
+        var opt = document.createElement('option');
+        opt.value = r.id;
+        opt.textContent = (r.name || r.id) + ' (' + r.iterations + ' iters)';
+        if (r.id === currentRun) opt.selected = true;
+        sel.appendChild(opt);
+      });
     }
+
+    function switchRun(runId) {
+      window.location.href = 'gallery.html?run=' + runId;
+    }
+
+    function loadRunManifest(runId, callback) {
+      var s = document.createElement('script');
+      s.src = 'snapshots/' + runId + '/manifest.js';
+      s.onload = callback;
+      document.head.appendChild(s);
+    }
+
+    function renderGallery() {
+      var data = window.MANIFEST || { latest: 0, iterations: [] };
+      var el = document.getElementById('gallery');
+      el.innerHTML = '';
+      document.getElementById('viewerLink').href = 'viewer.html?run=' + currentRun;
+      var runInfo = runsData.runs.find(function(r) { return r.id === currentRun; });
+      var promptEl = document.getElementById('runPrompt');
+      if (runInfo && runInfo.prompt && runInfo.prompt !== 'default') {
+        promptEl.innerHTML = '<strong>Prompt:</strong> ' + runInfo.prompt;
+        promptEl.style.display = '';
+      } else {
+        promptEl.style.display = 'none';
+      }
+      for (var i = 0; i <= data.latest; i++) {
+        var entry = data.iterations.find(function(e) { return e.num === i; });
+        var num = String(i).padStart(4, '0');
+        var desc = entry && entry.description ? ' \u2014 ' + entry.description : '';
+        var div = document.createElement('div');
+        div.className = 'entry';
+        div.innerHTML =
+          '<div class="meta"><strong>Iteration ' + i + '</strong>' + desc +
+          ' <a class="btn" href="viewer.html?run=' + currentRun + '&gen=' + i + '">View &rarr;</a></div>' +
+          '<img src="snapshots/' + currentRun + '/' + num + '.png" loading="lazy" alt="Iteration ' + i + '">';
+        el.appendChild(div);
+      }
+    }
+
+    populateRunSelector();
+    loadRunManifest(currentRun, function() {
+      renderGallery();
+    });
   </script>
 </body>
 </html>

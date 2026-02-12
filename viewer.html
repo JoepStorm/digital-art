@@ -47,11 +47,20 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+    select {
+      background: #333;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
   <iframe id="sketch"></iframe>
   <div class="controls">
+    <select id="runSelect" onchange="switchRun(this.value)"></select>
     <button onclick="load(0)">&laquo;</button>
     <button id="prev" onclick="go(-1)">&larr;</button>
     <input id="geninput" type="number" min="0" value="0"
@@ -61,15 +70,38 @@
     <button id="next" onclick="go(1)">&rarr;</button>
     <button onclick="load(manifest.latest)">&raquo;</button>
     <span class="desc" id="desc"></span>
-    <a class="link-btn" href="gallery.html">Gallery</a>
+    <a class="link-btn" id="galleryLink" href="gallery.html">Gallery</a>
   </div>
-  <script src="snapshots/manifest.js"></script>
+  <script src="snapshots/runs.js"></script>
   <script>
-    var manifest = window.MANIFEST || { latest: 0, iterations: [] };
-    var current = 0;
+    var runsData = window.RUNS || { runs: [], default: 'run_01' };
     var params = new URLSearchParams(window.location.search);
-    var startGen = params.get('gen');
-    load(startGen !== null ? Math.max(0, Math.min(manifest.latest, +startGen)) : manifest.latest);
+    var currentRun = params.get('run') || runsData.default || 'run_01';
+    var manifest = { latest: 0, iterations: [] };
+    var current = 0;
+
+    function populateRunSelector() {
+      var sel = document.getElementById('runSelect');
+      sel.innerHTML = '';
+      runsData.runs.forEach(function(r) {
+        var opt = document.createElement('option');
+        opt.value = r.id;
+        opt.textContent = (r.name || r.id) + ' (' + r.iterations + ' iters)';
+        if (r.id === currentRun) opt.selected = true;
+        sel.appendChild(opt);
+      });
+    }
+
+    function switchRun(runId) {
+      window.location.href = 'viewer.html?run=' + runId;
+    }
+
+    function loadRunManifest(runId, callback) {
+      var s = document.createElement('script');
+      s.src = 'snapshots/' + runId + '/manifest.js';
+      s.onload = callback;
+      document.head.appendChild(s);
+    }
 
     function go(delta) {
       load(Math.max(0, Math.min(manifest.latest, current + delta)));
@@ -77,7 +109,7 @@
 
     function load(n) {
       current = n;
-      document.getElementById('sketch').src = 'index.html?gen=' + n;
+      document.getElementById('sketch').src = 'index.html?run=' + currentRun + '&gen=' + n;
       document.getElementById('geninput').value = n;
       document.getElementById('geninput').max = manifest.latest;
       document.getElementById('label').textContent = '/ ' + manifest.latest;
@@ -85,7 +117,15 @@
       document.getElementById('next').disabled = (n >= manifest.latest);
       var entry = manifest.iterations.find(function(e) { return e.num === n; });
       document.getElementById('desc').textContent = entry ? entry.description : '';
+      document.getElementById('galleryLink').href = 'gallery.html?run=' + currentRun;
     }
+
+    populateRunSelector();
+    loadRunManifest(currentRun, function() {
+      manifest = window.MANIFEST || { latest: 0, iterations: [] };
+      var startGen = params.get('gen');
+      load(startGen !== null ? Math.max(0, Math.min(manifest.latest, +startGen)) : manifest.latest);
+    });
 
     document.addEventListener('keydown', function(e) {
       if (e.key === 'ArrowLeft') go(-1);

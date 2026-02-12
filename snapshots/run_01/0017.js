@@ -15,11 +15,6 @@
 // Iteration 15: Add "Ionic Repulsion" to agent logic, preventing over-clustering by pushing agents away from each other
 // Iteration 16: Add "Environmental Turbulence" using Perlin noise to guide agents through invisible currents
 // Iteration 17: Add "Filamental Crystallization" by introducing a non-linear Laplacian weight that sharpens active trail edges
-// Iteration 18: Add "Oscillatory Signal Fluctuations" to agent sensing to create rhythmic pulsing in trail densities
-// Iteration 19: Add "Bioluminescent Pulse" by modulating individual agent deposit intensity via high-frequency sine waves
-// Iteration 20: Add "Chromatographic Shift" where agent speed influences trail color temperature and deposit density
-// Iteration 21: Introduce "Surface Tension Curvature" by modulating agent sensing based on local trail gradient steepness
-// Iteration 22: Introduce "Membrane Porosity" by adjusting diffusion weights based on local brightness, creating sharper clusters and ghostlier trails
 const agentColor = new Uint8Array([0, 0, 0]);
 const agentsNum = 5000;
 const sensorOffset = 18;
@@ -45,7 +40,6 @@ function draw() {
   // DIFFUSION AND EVAPORATION STEP
   let nextPixels = new Uint8ClampedArray(pixels);
   
-  // Asymmetric decay for a subtle color bleed effect
   const decayR = 0.94; 
   const decayG = 0.96;
   const decayB = 0.98;
@@ -54,31 +48,26 @@ function draw() {
     for (let y = 1; y < height - 1; y++) {
       let index = (x + y * width) * 4;
       
-      // Membrane Porosity: Local density affects how much pixels diffuse
-      // Darker areas (trails) diffuse less (keep sharper), lighter areas diffuse more
-      let avgVal = (pixels[index] + pixels[index+1] + pixels[index+2]) / 765;
-      let centerWeight = lerp(0.4, 0.1, avgVal);
-      let neighborWeight = (1.0 - centerWeight) / 8.0;
-
       let sumR = 0, sumG = 0, sumB = 0;
       
-      // 3x3 kernel convolution for diffusion
+      // We apply weighted diffusion where the center has higher "inertia"
+      // to keep trails from blurring away too quickly into mush
       for (let i = -1; i <= 1; i++) {
         for (let j = -1; j <= 1; j++) {
           let nIdx = index + (i + j * width) * 4;
-          let weight = (i === 0 && j === 0) ? centerWeight : neighborWeight; 
+          let weight = (i === 0 && j === 0) ? 0.2 : 0.1; 
           sumR += pixels[nIdx] * weight;
           sumG += pixels[nIdx+1] * weight;
           sumB += pixels[nIdx+2] * weight;
         }
       }
 
-      // Evaporate towards white (255)
       let r = sumR * decayR + (1 - decayR) * 255;
       let g = sumG * decayG + (1 - decayG) * 255;
       let b = sumB * decayB + (1 - decayB) * 255;
 
-      // FILAMENTAL CRYSTALLIZATION: Sharpen edges and contrast
+      // FILAMENTAL CRYSTALLIZATION: Non-linear response that "sharpens" dark areas
+      // This causes the slime mold veins to look more like delicate crystals or roots
       nextPixels[index]     = r < 140 ? r * 0.92 : min(255, r * 1.015); 
       nextPixels[index + 1] = g < 140 ? g * 0.92 : min(255, g * 1.015);
       nextPixels[index + 2] = b < 140 ? b * 0.92 : min(255, b * 1.015);
@@ -105,8 +94,6 @@ class Agent {
     this.dir = random(TWO_PI);
     this.speed = 2.5;
     this.nutrientSens = 0;
-    this.phase = random(TWO_PI);
-    this.pulseFreq = random(0.1, 0.3);
   }
 
   updateDirection() {
@@ -115,34 +102,30 @@ class Agent {
     let distSq = dx * dx + dy * dy;
     this.nutrientSens = distSq < 40000 ? map(distSq, 0, 40000, 1, 0) : 0;
 
-    let signalStrength = 1.0 + 0.5 * sin(frameCount * 0.05 + this.phase);
-
-    // SURFACE TENSION CURVATURE: Sense values are modified by the local gradient 
-    const center = this.sense(0) * signalStrength;
-    const left = this.sense(-sensorAngle) * signalStrength;
-    const right = this.sense(+sensorAngle) * signalStrength;
-    
-    // Dynamic turning bias based on signal differences
-    let steerStrength = map(center, 0, 255, 1.2, 0.5); 
+    const center = this.sense(0);
+    const left = this.sense(-sensorAngle);
+    const right = this.sense(+sensorAngle);
 
     if (center < left && center < right) {
-      if(random() < 0.01) this.dir += turnAngle * steerStrength;
+      if(random() < 0.01) this.dir += turnAngle;
     } else if (center > left && center > right) {
-      this.dir += (random() < 0.5 ? 1 : -1) * turnAngle * steerStrength;
+      this.dir += (random() < 0.5 ? 1 : -1) * turnAngle;
     } else if (left < right) {
-      this.dir -= turnAngle * steerStrength;
+      this.dir -= turnAngle;
     } else if (right < left) {
-      this.dir += turnAngle * steerStrength;
+      this.dir += turnAngle;
     }
     
     let floorX = floor(this.x);
     let floorY = floor(this.y);
-    const idx = (max(0, min(width-1, floorX)) + max(0, min(height-1, floorY)) * width) * 4;
+    const idx = (floorX + floorY * width) * 4;
     const brightness = (pixels[idx] + pixels[idx+1] + pixels[idx+2]) / 765;
     
+    // Environmental Turbulence: Influence agent direction based on underlying Perlin noise field
     let turbulence = noise(this.x * 0.003, this.y * 0.003, noiseZ) * TWO_PI * 2;
     this.dir = lerp(this.dir, turbulence, 0.03);
 
+    // Ionic Repulsion
     if (brightness < 0.2) {
         this.dir += random([-1, 1]) * turnAngle * 2.0;
     }
@@ -182,18 +165,17 @@ class Agent {
 
     const index = (floor(this.x) + floor(this.y) * width) * 4;
     
-    let pulse = 0.5 + 0.5 * Math.sin(frameCount * this.pulseFreq + this.phase);
+    let depositR = lerp(45, 80, this.nutrientSens);
+    let depositG = lerp(45, 50, this.nutrientSens);
+    let depositB = lerp(45, 0, this.nutrientSens);
     
-    let t = constrain(this.speed / 4.0, 0, 1);
-    let depositR = lerp(90, 20, t);
-    let depositG = lerp(70, 70, t);
-    let depositB = lerp(30, 150, t);
+    depositR = lerp(depositR, 10, this.speed / 8);
+    depositG = lerp(depositG, 60, this.speed / 8);
+    depositB = lerp(depositB, 150, this.speed / 8);
 
-    let intensity = pulse * (1.0 + this.nutrientSens * 2.0);
-    
-    pixels[index]     = max(0, pixels[index] - depositR * intensity);
-    pixels[index + 1] = max(0, pixels[index + 1] - depositG * intensity);
-    pixels[index + 2] = max(0, pixels[index + 2] - depositB * intensity);
+    pixels[index]     = max(0, pixels[index] - depositR);
+    pixels[index + 1] = max(0, pixels[index + 1] - depositG);
+    pixels[index + 2] = max(0, pixels[index + 2] - depositB);
   }
 }
 

@@ -19,7 +19,6 @@
 // Iteration 19: Add "Bioluminescent Pulse" by modulating individual agent deposit intensity via high-frequency sine waves
 // Iteration 20: Add "Chromatographic Shift" where agent speed influences trail color temperature and deposit density
 // Iteration 21: Introduce "Surface Tension Curvature" by modulating agent sensing based on local trail gradient steepness
-// Iteration 22: Introduce "Membrane Porosity" by adjusting diffusion weights based on local brightness, creating sharper clusters and ghostlier trails
 const agentColor = new Uint8Array([0, 0, 0]);
 const agentsNum = 5000;
 const sensorOffset = 18;
@@ -54,19 +53,13 @@ function draw() {
     for (let y = 1; y < height - 1; y++) {
       let index = (x + y * width) * 4;
       
-      // Membrane Porosity: Local density affects how much pixels diffuse
-      // Darker areas (trails) diffuse less (keep sharper), lighter areas diffuse more
-      let avgVal = (pixels[index] + pixels[index+1] + pixels[index+2]) / 765;
-      let centerWeight = lerp(0.4, 0.1, avgVal);
-      let neighborWeight = (1.0 - centerWeight) / 8.0;
-
       let sumR = 0, sumG = 0, sumB = 0;
       
       // 3x3 kernel convolution for diffusion
       for (let i = -1; i <= 1; i++) {
         for (let j = -1; j <= 1; j++) {
           let nIdx = index + (i + j * width) * 4;
-          let weight = (i === 0 && j === 0) ? centerWeight : neighborWeight; 
+          let weight = (i === 0 && j === 0) ? 0.2 : 0.1; 
           sumR += pixels[nIdx] * weight;
           sumG += pixels[nIdx+1] * weight;
           sumB += pixels[nIdx+2] * weight;
@@ -118,6 +111,7 @@ class Agent {
     let signalStrength = 1.0 + 0.5 * sin(frameCount * 0.05 + this.phase);
 
     // SURFACE TENSION CURVATURE: Sense values are modified by the local gradient 
+    // This makes agents "cling" more to existing filament edges or repel based on steepness
     const center = this.sense(0) * signalStrength;
     const left = this.sense(-sensorAngle) * signalStrength;
     const right = this.sense(+sensorAngle) * signalStrength;
@@ -168,6 +162,7 @@ class Agent {
     sx = (sx + width) % width;
     sy = (sy + height) % height;
     const index = (sx + sy * width) * 4;
+    // Sensing luminosity: lower is darker (high pheromone trail)
     return (pixels[index] + pixels[index+1] + pixels[index+2]) / 3;
   }
 
@@ -184,6 +179,7 @@ class Agent {
     
     let pulse = 0.5 + 0.5 * Math.sin(frameCount * this.pulseFreq + this.phase);
     
+    // CHROMATOGRAPHIC SHIFT: trail color shifts from warm gold to cool violet based on speed
     let t = constrain(this.speed / 4.0, 0, 1);
     let depositR = lerp(90, 20, t);
     let depositG = lerp(70, 70, t);
