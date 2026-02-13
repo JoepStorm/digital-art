@@ -89,7 +89,43 @@ window.RUNS = {
       "prompt": "Create distinct agent populations with different colors that interact. One type chases the other. Prey agents flee and leave fading trails. Predators leave bright trails. The populations should oscillate.",
       "iterations": 18,
       "latest": 18
+    },
+    {
+      "id": "run_11",
+      "name": "Flocking - Multi-species",
+      "model": "google/gemini-3-flash-preview",
+      "description": "Create distinct species with different colors that interact in interesting ways. It does not have to be realistic, go for beauty instead.",
+      "prompt": "Create distinct species with different colors that interact in interesting ways. It does not have to be realistic, go for beauty instead.",
+      "iterations": 19,
+      "latest": 19
+    },
+    {
+      "id": "run_12",
+      "name": "Flocking - primordial soup",
+      "model": "google/gemini-3-flash-preview",
+      "description": "A particle ecosystem where colored boids flock, hunt, and consume each other. Each boid has a size and a color. When a larger boid catches a smaller one, it absorbs it \u2014 growing slightly and blending their colors  together. As boids grow, they slow down and gradually lose energy, shrinking over time. Beyond a certain size they split into two smaller offspring, like cell division. Meanwhile, tiny new boids spontaneously spawn at the edges in random bright colors, replenishing the food chain. The result is a endless cycle: small fast boids swarm and scatter, mid-sized ones hunt in loose packs, and bloated giants drift slowly before dividing \u2014 a colorful, emergent food web that never reaches equilibrium.",
+      "prompt": "A particle ecosystem where colored boids flock, hunt, and consume each other. Each boid has a size and a color. When a larger boid catches a smaller one, it absorbs it \u2014 growing slightly and blending their colors  together. As boids grow, they slow down and gradually lose energy, shrinking over time. Beyond a certain size they split into two smaller offspring, like cell division. Meanwhile, tiny new boids spontaneously spawn at the edges in random bright colors, replenishing the food chain. The result is a endless cycle: small fast boids swarm and scatter, mid-sized ones hunt in loose packs, and bloated giants drift slowly before dividing \u2014 a colorful, emergent food web that never reaches equilibrium.",
+      "iterations": 6,
+      "latest": 6
+    },
+    {
+      "id": "run_13",
+      "name": "MNCA - dynamic",
+      "model": "google/gemini-3-flash-preview",
+      "description": "This is a multi neighborhood cellular automata. Make the behavior very dynamic, constantly changing, evolving.",
+      "prompt": "This is a multi neighborhood cellular automata. Make the behavior very dynamic, constantly changing, evolving.",
+      "iterations": 20,
+      "latest": 20
+    },
+    {
+      "id": "run_14",
+      "name": "MNCA - multi-cell types",
+      "model": "google/gemini-3-flash-preview",
+      "description": "Create different types of cells, with different very simple rules. The rules should leave room to enable new, emerging, unexpected behavior. Additionally, focus on keeping the simulation fast to run, so avoid very compute-heavy methods.",
+      "prompt": "Create different types of cells, with different very simple rules. The rules should leave room to enable new, emerging, unexpected behavior. Additionally, focus on keeping the simulation fast to run, so avoid very compute-heavy methods.",
+      "iterations": 14,
+      "latest": 14
     }
   ],
-  "default": "run_10"
+  "default": "run_14"
 };

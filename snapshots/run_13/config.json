@@ -1,0 +1,6 @@
+{
+  "name": "MNCA - dynamic",
+  "model": "google/gemini-3-flash-preview",
+  "prompt": "This is a multi neighborhood cellular automata. Make the behavior very dynamic, constantly changing, evolving.",
+  "description": "This is a multi neighborhood cellular automata. Make the behavior very dynamic, constantly changing, evolving."
+}

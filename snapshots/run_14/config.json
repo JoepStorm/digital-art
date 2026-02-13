@@ -1,0 +1,6 @@
+{
+  "name": "MNCA - multi-cell types",
+  "model": "google/gemini-3-flash-preview",
+  "prompt": "Create different types of cells, with different very simple rules. The rules should leave room to enable new, emerging, unexpected behavior. Additionally, focus on keeping the simulation fast to run, so avoid very compute-heavy methods.",
+  "description": "Create different types of cells, with different very simple rules. The rules should leave room to enable new, emerging, unexpected behavior. Additionally, focus on keeping the simulation fast to run, so avoid very compute-heavy methods."
+}

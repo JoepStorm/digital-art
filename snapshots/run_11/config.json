@@ -1,0 +1,6 @@
+{
+  "name": "Flocking - Multi-species",
+  "model": "google/gemini-3-flash-preview",
+  "prompt": "Create distinct species with different colors that interact in interesting ways. It does not have to be realistic, go for beauty instead.",
+  "description": "Create distinct species with different colors that interact in interesting ways. It does not have to be realistic, go for beauty instead."
+}
