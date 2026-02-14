@@ -32,7 +32,7 @@ let chaosEddies = [];
 let sparks = [];
 
 function setup() {
-  createCanvas(1600, 800);
+  createCanvas(windowWidth, windowHeight);
   pixelDensity(1);
   background(245);
   agents = new Agents();

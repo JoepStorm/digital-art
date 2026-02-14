@@ -18,7 +18,7 @@ let agents;
 let bloomGrid; // Secondary grid for spatial light diffusion
 
 function setup() {
-  createCanvas(1600, 800);
+  createCanvas(windowWidth, windowHeight);
   pixelDensity(1);
   background(0);
   agents = new Agents();

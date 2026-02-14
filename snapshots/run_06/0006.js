@@ -11,7 +11,7 @@ const turnAngle = 0.005; // Extremely subtle turning
 let agents;
 
 function setup() {
-  createCanvas(1600, 800);
+  createCanvas(windowWidth, windowHeight);
   pixelDensity(1);
   background(255); 
   agents = new Agents();

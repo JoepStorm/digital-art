@@ -10,7 +10,7 @@ const turnAngle = Math.PI / 5;
 let agents;
 
 function setup() {
-  createCanvas(1920, 950);
+  createCanvas(windowWidth, windowHeight);
   pixelDensity(1);
   background(0);
   // frameRate(10);

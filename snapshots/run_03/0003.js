@@ -9,7 +9,7 @@ const turnAngle = Math.PI / 10;
 let agents;
 
 function setup() {
-  createCanvas(1600, 800);
+  createCanvas(windowWidth, windowHeight);
   pixelDensity(1);
   background(0);
   colorMode(HSB, 255);

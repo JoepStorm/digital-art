@@ -19,7 +19,7 @@ let agents;
 let bloomGrid;
 
 function setup() {
-  createCanvas(1600, 800);
+  createCanvas(windowWidth, windowHeight);
   pixelDensity(1);
   background(0);
   agents = new Agents();
