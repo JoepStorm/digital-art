@@ -12,7 +12,7 @@ const perception = 60;
 let flock;
 
 function setup() {
-  createCanvas(1600, 900);
+  createCanvas(windowWidth, windowHeight);
   background(0);
   flock = new Flock();
 }

@@ -21,7 +21,7 @@ const rulesB = [[0, 0.15, 0.35, 1], [0, 0.40, 0.70, 0], [1, 0.20, 0.40, 1], [1, 
 const rulesC = [[0, 0.10, 0.45, 1], [1, 0.25, 0.55, 1], [2, 0.05, 0.20, 0]];
 
 function setup() {
-  createCanvas(1600, 900);
+  createCanvas(windowWidth, windowHeight);
   pixelDensity(1);
   cols = floor(width / res);
   rows = floor(height / res);

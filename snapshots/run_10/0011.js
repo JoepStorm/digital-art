@@ -42,7 +42,7 @@ let trailA, trailB;
 let bursts = [];
 
 function setup() {
-  createCanvas(1600, 900);
+  createCanvas(windowWidth, windowHeight);
   pixelDensity(1);
   background(0);
   

@@ -21,7 +21,7 @@ let preyAgents, predatorAgents;
 let trailA, trailB; // Double-buffered trail maps for manual diffusion
 
 function setup() {
-  createCanvas(1600, 900);
+  createCanvas(windowWidth, windowHeight);
   pixelDensity(1);
   background(0);
   

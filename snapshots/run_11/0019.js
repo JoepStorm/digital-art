@@ -27,7 +27,7 @@ let spores = [];
 let moons = [];
 
 function setup() {
-  createCanvas(1600, 900);
+  createCanvas(windowWidth, windowHeight);
   background(0);
   blendMode(SCREEN);
   flock = new Flock();

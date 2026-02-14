@@ -32,7 +32,7 @@ let preyAgents, predatorAgents;
 let trailA, trailB;
 
 function setup() {
-  createCanvas(1600, 900);
+  createCanvas(windowWidth, windowHeight);
   pixelDensity(1);
   background(0);
   

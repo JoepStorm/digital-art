@@ -14,7 +14,7 @@ const perception = 65;
 let flock;
 
 function setup() {
-  createCanvas(1600, 900);
+  createCanvas(windowWidth, windowHeight);
   background(0);
   // Using blendMode SCREEN allows colors to accumulate and create "white" light where species intersect
   blendMode(SCREEN);

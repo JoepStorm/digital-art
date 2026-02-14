@@ -29,7 +29,7 @@ let clouds;
 let glyphs = [];
 
 function setup() {
-  createCanvas(1600, 900);
+  createCanvas(windowWidth, windowHeight);
   pixelDensity(1);
   background(0);
   agents = new Agents();

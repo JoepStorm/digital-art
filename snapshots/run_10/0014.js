@@ -49,7 +49,7 @@ let preyCenterX = 0, preyCenterY = 0;
 let predCenterX = 0, predCenterY = 0;
 
 function setup() {
-  createCanvas(1600, 900);
+  createCanvas(windowWidth, windowHeight);
   pixelDensity(1);
   background(0);
   

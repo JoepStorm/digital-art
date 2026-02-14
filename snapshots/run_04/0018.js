@@ -27,7 +27,7 @@ const agentLifespan = 400; // How many frames an agent lives before resetting
 let agents;
 
 function setup() {
-  createCanvas(1600, 900);
+  createCanvas(windowWidth, windowHeight);
   pixelDensity(1);
   background(255);
   agents = new Agents();

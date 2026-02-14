@@ -36,7 +36,7 @@ let rules = [
 ];
 
 function setup() {
-  createCanvas(1600, 900);
+  createCanvas(windowWidth, windowHeight);
   pixelDensity(1);
   cols = floor(width / res);
   rows = floor(height / res);

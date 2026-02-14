@@ -19,7 +19,7 @@ let agents;
 let nucleationPoints = [];
 
 function setup() {
-  createCanvas(1600, 900);
+  createCanvas(windowWidth, windowHeight);
   pixelDensity(1);
   background(5, 8, 12);
   agents = new Agents();
