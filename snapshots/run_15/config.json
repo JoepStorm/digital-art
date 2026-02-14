@@ -1,0 +1,6 @@
+{
+  "name": "Touch",
+  "model": "google/gemini-3-flash-preview",
+  "prompt": "Focus on touch interactions. Depending on the type of touch, length, shape, different behavior occurs, such as repelling or attrecting agents. Use fewer agents, Maximum 600. Have different agents behave differently depending on the touch.",
+  "description": "Focus on touch interactions. Depending on the type of touch, length, shape, different behavior occurs, such as repelling or attrecting agents. Use fewer agents, Maximum 600. Have different agents behave differently depending on the touch."
+}

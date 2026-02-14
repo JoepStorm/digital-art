@@ -125,7 +125,16 @@ window.RUNS = {
       "prompt": "Create different types of cells, with different very simple rules. The rules should leave room to enable new, emerging, unexpected behavior. Additionally, focus on keeping the simulation fast to run, so avoid very compute-heavy methods.",
       "iterations": 14,
       "latest": 14
+    },
+    {
+      "id": "run_15",
+      "name": "Touch",
+      "model": "google/gemini-3-flash-preview",
+      "description": "Focus on touch interactions. Depending on the type of touch, length, shape, different behavior occurs, such as repelling or attrecting agents. Use fewer agents, Maximum 600. Have different agents behave differently depending on the touch.",
+      "prompt": "Focus on touch interactions. Depending on the type of touch, length, shape, different behavior occurs, such as repelling or attrecting agents. Use fewer agents, Maximum 600. Have different agents behave differently depending on the touch.",
+      "iterations": 13,
+      "latest": 13
     }
   ],
-  "default": "run_14"
+  "default": "run_15"
 };
