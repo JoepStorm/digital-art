@@ -28,7 +28,7 @@ let resonanceToggle;
 let fractalToggle;
 
 function setup() {
-  createCanvas(windowWidth, windowHeight);
+  createCanvas(windowWidth, windowHeight + 4);
   
   optionsContainer = createDiv('').style('position', 'absolute').style('top', '10px').style('left', '10px').style('color', 'white').style('z-index', '100');
   let details = createElement('details').parent(optionsContainer);

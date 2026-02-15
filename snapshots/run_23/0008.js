@@ -20,7 +20,7 @@ let optionsOpen = false;
 const colors = ["#ff4444", "#44ff44", "#4444ff", "#ffff44", "#ff44ff"];
 
 function setup() {
-  createCanvas(windowWidth, windowHeight);
+  createCanvas(windowWidth, windowHeight + 4);
   createInterface();
   initSim();
 }
