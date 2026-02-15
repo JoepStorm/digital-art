@@ -1,0 +1,6 @@
+{
+  "name": "Particle-life: Constellations",
+  "model": "google/gemini-3-flash-preview",
+  "prompt": "Constellations. Create conditions for complex constellations to emerge. Otherwise follow a minimalistic visual style. Can vary colors, but don't overdo it with a lot of spark.",
+  "description": "Constellations. Create conditions for complex constellations to emerge. Otherwise follow a minimalistic visual style. Can vary colors, but don't overdo it with a lot of spark."
+}

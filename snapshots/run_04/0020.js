@@ -29,7 +29,7 @@ const agentLifespan = 400;
 let agents;
 
 function setup() {
-  createCanvas(windowWidth, windowHeight);
+  createCanvas(windowWidth, windowHeight + 4);
   pixelDensity(1);
   background(255);
   agents = new Agents();

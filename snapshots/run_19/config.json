@@ -1,0 +1,6 @@
+{
+  "name": "Particle-life: Sparkling",
+  "model": "google/gemini-3-flash-preview",
+  "prompt": "Sparkling. Focus on simple, small changes. Focus on visual style, colours, etc. For the very first iteration only, change nothing. ",
+  "description": "Sparkling. Focus on simple, small changes. Focus on visual style, colours, etc. For the very first iteration only, change nothing. "
+}

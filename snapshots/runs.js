@@ -132,9 +132,72 @@ window.RUNS = {
       "model": "google/gemini-3-flash-preview",
       "description": "Focus on touch interactions. Depending on the type of touch, length, shape, different behavior occurs, such as repelling or attrecting agents. Use fewer agents, Maximum 600. Have different agents behave differently depending on the touch.",
       "prompt": "Focus on touch interactions. Depending on the type of touch, length, shape, different behavior occurs, such as repelling or attrecting agents. Use fewer agents, Maximum 600. Have different agents behave differently depending on the touch.",
+      "iterations": 11,
+      "latest": 11
+    },
+    {
+      "id": "run_17",
+      "name": "Particle-life: Harmony",
+      "model": "google/gemini-3-flash-preview",
+      "description": "Harmony",
+      "prompt": "Harmony",
+      "iterations": 4,
+      "latest": 4
+    },
+    {
+      "id": "run_18",
+      "name": "Particle-life: Harmony v2",
+      "model": "google/gemini-3-flash-preview",
+      "description": "Harmony",
+      "prompt": "Harmony",
+      "iterations": 6,
+      "latest": 6
+    },
+    {
+      "id": "run_19",
+      "name": "Particle-life: Sparkling",
+      "model": "google/gemini-3-flash-preview",
+      "description": "Sparkling. Focus on simple, small changes. Focus on visual style, colours, etc. For the very first iteration only, change nothing. ",
+      "prompt": "Sparkling. Focus on simple, small changes. Focus on visual style, colours, etc. For the very first iteration only, change nothing. ",
+      "iterations": 19,
+      "latest": 19
+    },
+    {
+      "id": "run_20",
+      "name": "Particle-life: Constellations",
+      "model": "google/gemini-3-flash-preview",
+      "description": "Constellations. Create conditions for complex constellations to emerge. Otherwise follow a minimalistic visual style. Can vary colors, but don't overdo it with a lot of spark.",
+      "prompt": "Constellations. Create conditions for complex constellations to emerge. Otherwise follow a minimalistic visual style. Can vary colors, but don't overdo it with a lot of spark.",
+      "iterations": 15,
+      "latest": 15
+    },
+    {
+      "id": "run_21",
+      "name": "Particle-life: Quantum",
+      "model": "google/gemini-3-flash-preview",
+      "description": "Quantum. Quantum physics, quantum mechanics.",
+      "prompt": "Quantum. Quantum physics, quantum mechanics.",
       "iterations": 13,
       "latest": 13
+    },
+    {
+      "id": "run_22",
+      "name": "Particle-life: Graphs",
+      "model": "google/gemini-3-flash-preview",
+      "description": "Graphs. Connected, nodes through graphs that form structures, and behave different based on their size, shape, etc. Be careful not to connect through a boundary, as then the line crosses the full screen. Avoid that.",
+      "prompt": "Graphs. Connected, nodes through graphs that form structures, and behave different based on their size, shape, etc. Be careful not to connect through a boundary, as then the line crosses the full screen. Avoid that.",
+      "iterations": 10,
+      "latest": 10
+    },
+    {
+      "id": "run_23",
+      "name": "Particle-life: Order vs Chaos",
+      "model": "google/gemini-3-flash-preview",
+      "description": "Order vs Chaos",
+      "prompt": "Order vs Chaos",
+      "iterations": 11,
+      "latest": 11
     }
   ],
-  "default": "run_15"
+  "default": "run_23"
 };

@@ -21,7 +21,7 @@ const predatorStarveChance = 0.001;
 let preyAgents, predatorAgents;
 
 function setup() {
-  createCanvas(windowWidth, windowHeight);
+  createCanvas(windowWidth, windowHeight + 4);
   pixelDensity(1);
   background(0);
   preyAgents = Array(preyNum).fill().map(() => new PreyAgent());

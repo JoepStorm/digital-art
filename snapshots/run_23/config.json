@@ -1,0 +1,6 @@
+{
+  "name": "Particle-life: Order vs Chaos",
+  "model": "google/gemini-3-flash-preview",
+  "prompt": "Order vs Chaos",
+  "description": "Order vs Chaos"
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Particle-life: Graphs",
+  "model": "google/gemini-3-flash-preview",
+  "prompt": "Graphs. Connected, nodes through graphs that form structures, and behave different based on their size, shape, etc. Be careful not to connect through a boundary, as then the line crosses the full screen. Avoid that.",
+  "description": "Graphs. Connected, nodes through graphs that form structures, and behave different based on their size, shape, etc. Be careful not to connect through a boundary, as then the line crosses the full screen. Avoid that."
+}

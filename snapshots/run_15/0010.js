@@ -24,7 +24,7 @@ let prisms = [];
 let chimes = []; // New resonant points at intersections
 
 function setup() {
-  createCanvas(windowWidth, windowHeight);
+  createCanvas(windowWidth, windowHeight + 4);
   pixelDensity(1);
   background(0);
   agents = new Agents(600);

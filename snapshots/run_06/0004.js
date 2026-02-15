@@ -11,7 +11,7 @@ const turnAngle = Math.PI / 120; // Very small turns for graceful, sweeping traj
 let agents;
 
 function setup() {
-  createCanvas(windowWidth, windowHeight);
+  createCanvas(windowWidth, windowHeight + 4);
   pixelDensity(1);
   background(250); 
   agents = new Agents();

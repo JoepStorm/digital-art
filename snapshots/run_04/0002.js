@@ -11,7 +11,7 @@ const randomness = 0.15; // The entropy factor: agents occasionally deviate from
 let agents;
 
 function setup() {
-  createCanvas(windowWidth, windowHeight);
+  createCanvas(windowWidth, windowHeight + 4);
   pixelDensity(1);
   background(255);
   agents = new Agents();

@@ -10,7 +10,7 @@ const turnAngle = Math.PI / 12;
 let agents;
 
 function setup() {
-  createCanvas(windowWidth, windowHeight);
+  createCanvas(windowWidth, windowHeight + 4);
   pixelDensity(1);
   background(250); // Nearly pure white for a high-key minimalist canvas
   agents = new Agents();

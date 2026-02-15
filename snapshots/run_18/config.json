@@ -1,0 +1,6 @@
+{
+  "name": "Particle-life: Harmony v2",
+  "model": "google/gemini-3-flash-preview",
+  "prompt": "Harmony",
+  "description": "Harmony"
+}

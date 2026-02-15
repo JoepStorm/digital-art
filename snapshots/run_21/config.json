@@ -1,0 +1,6 @@
+{
+  "name": "Particle-life: Quantum",
+  "model": "google/gemini-3-flash-preview",
+  "prompt": "Quantum. Quantum physics, quantum mechanics.",
+  "description": "Quantum. Quantum physics, quantum mechanics."
+}

@@ -26,7 +26,7 @@ let agents;
 let noiseZ = 0;
 
 function setup() {
-  createCanvas(windowWidth, windowHeight);
+  createCanvas(windowWidth, windowHeight + 4);
   pixelDensity(1);
   background(255);
   agents = new Agents();

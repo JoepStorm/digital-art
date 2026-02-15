@@ -16,7 +16,7 @@ const perception = 65;
 let flock;
 
 function setup() {
-  createCanvas(windowWidth, windowHeight);
+  createCanvas(windowWidth, windowHeight + 4);
   background(0);
   blendMode(SCREEN);
   flock = new Flock();
